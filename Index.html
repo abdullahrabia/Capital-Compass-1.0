@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌍 مستكشف عواصم العالم</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+  }
+
+  body {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+    background-size: 300% 300%;
+    animation: gradientShift 15s ease infinite;
+    padding: 20px;
+    color: #fff;
+  }
+
+  @keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  header {
+    text-align: center;
+    padding: 25px;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  header h1 {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+    text-shadow: 2px 2px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  header p {
+    opacity: 0.9;
+    font-size: 1rem;
+  }
+
+  /* شريط الأدوات */
+  .toolbar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .search-box input {
+    width: 100%;
+    padding: 15px 20px 15px 45px;
+    border: none;
+    border-radius: 15px;
+    font-size: 1rem;
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    outline: none;
+    transition: 0.3s;
+  }
+
+  .search-box input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .search-box input:focus {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: #fdbb2d;
+  }
+
+  .search-box::before {
+    content: '🔍';
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    pointer-events: none;
+  }
+
+  .filter-select {
+    padding: 15px 20px;
+    border-radius: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    outline: none;
+  }
+
+  .filter-select option {
+    background: #1a2a6c;
+    color: #fff;
+  }
+
+  /* شبكة الدول */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .card {
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 5px;
+    height: 100%;
+    background: linear-gradient(180deg, #fdbb2d, #b21f1f);
+    transition: width 0.3s;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    background: rgba(0, 0, 0, 0.5);
+  }
+
+  .card:hover::before {
+    width: 100%;
+    opacity: 0.1;
+  }
+
+  .card .flag {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .card .country {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .card .capital {
+    font-size: 1rem;
+    color: #fdbb2d;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .card .info {
+    font-size: 0.85rem;
+    opacity: 0.85;
+    line-height: 1.6;
+  }
+
+  .card .continent-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(253, 187, 45, 0.9);
+    color: #1a2a6c;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  /* النافذة المنبثقة للتفاصيل */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    animation: fadeIn 0.3s;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .modal {
+    background: linear-gradient(135deg, #1e2a5c, #2c1a4d);
+    border-radius: 25px;
+    padding: 35px;
+    max-width: 550px;
+    width: 100%;
+    position: relative;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    animation: slideUp 0.4s;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(50px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    border: none;
+    color: #fff;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-close:hover {
+    background: #e74c3c;
+    transform: rotate(90deg);
+  }
+
+  .modal .modal-flag {
+    font-size: 5rem;
+    text-align: center;
+    display: block;
+    margin-bottom: 15px;
+  }
+
+  .modal h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 8px;
+  }
+
+  .modal .modal-capital {
+    text-align: center;
+    font-size: 1.4rem;
+    color: #fdbb2d;
+    font-weight: 700;
+    margin-bottom: 25px;
+  }
+
+  .modal-info {
+    display: grid;
+    gap: 15px;
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    border-right: 4px solid #fdbb2d;
+  }
+
+  .info-row span:first-child {
+    opacity: 0.8;
+  }
+
+  .info-row span:last-child {
+    font-weight: 700;
+    color: #fdbb2d;
+  }
+
+  /* رسالة عدم وجود نتائج */
+  .no-results {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 1.2rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 20px;
+    display: none;
+  }
+
+  .no-results.show {
+    display: block;
+  }
+
+  /* الإحصائيات */
+  .stats {
+    text-align: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 15px;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .stats strong {
+    color: #fdbb2d;
+  }
+
+  /* تصميم متجاوب */
+  @media (max-width: 600px) {
+    header h1 { font-size: 1.6rem; }
+    .grid { grid-template-columns: 1fr; }
+    .modal { padding: 25px; }
+    .modal h2 { font-size: 1.5rem; }
+    .modal .modal-flag { font-size: 3.5rem; }
+  }
+
+  /* شريط تمرير مخصص */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+  ::-webkit-scrollbar-thumb {
+    background: #fdbb2d;
+    border-radius: 10px;
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h1>🌍 مستكشف عواصم العالم</h1>
+    <p>اكتشف عواصم دول العالم مع معلومات جغرافية ممتعة</p>
+  </header>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="ابحث عن دولة أو عاصمة...">
+    </div>
+    <select class="filter-select" id="continentFilter">
+      <option value="all">🌐 جميع القارات</option>
+      <option value="آسيا">🌏 آسيا</option>
+      <option value="أفريقيا">🌍 أفريقيا</option>
+      <option value="أوروبا">🌍 أوروبا</option>
+      <option value="أمريكا الشمالية">🌎 أمريكا الشمالية</option>
+      <option value="أمريكا الجنوبية">🌎 أمريكا الجنوبية</option>
+      <option value="أوقيانوسيا">🌊 أوقيانوسيا</option>
+      <option value="الشرق الأوسط">🕌 الشرق الأوسط</option>
+    </select>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="no-results" id="noResults">
+    🔍 لا توجد نتائج مطابقة لبحثك
+  </div>
+</div>
+
+<!-- النافذة المنبثقة -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <span class="modal-flag" id="modalFlag"></span>
+    <h2 id="modalCountry"></h2>
+    <div class="modal-capital" id="modalCapital"></div>
+    <div class="modal-info" id="modalInfo"></div>
+  </div>
+</div>
+
+<script>
+  /* ============================
+     📊 بيانات عواصم العالم
+     ============================ */
+  const capitalsData = [
+    // الشرق الأوسط
+    { country: 'السعودية', capital: 'الرياض', flag: '🇸🇦', continent: 'الشرق الأوسط', population: '35 مليون', currency: 'ريال سعودي', language: 'العربية' },
+    { country: 'مصر', capital: 'القاهرة', flag: '🇪🇬', continent: 'الشرق الأوسط', population: '105 مليون', currency: 'جنيه مصري', language: 'العربية' },
+    { country: 'الإمارات', capital: 'أبو ظبي', flag: '🇦🇪', continent: 'الشرق الأوسط', population: '10 مليون', currency: 'درهم إماراتي', language: 'العربية' },
+    { country: 'الأردن', capital: 'عمّان', flag: '🇯🇴', continent: 'الشرق الأوسط', population: '11 مليون', currency: 'دينار أردني', language: 'العربية' },
+    { country: 'لبنان', capital: 'بيروت', flag: '🇱🇧', continent: 'الشرق الأوسط', population: '5 مليون', currency: 'ليرة لبنانية', language: 'العربية' },
+    { country: 'العراق', capital: 'بغداد', flag: '🇮🇶', continent: 'الشرق الأوسط', population: '43 مليون', currency: 'دينار عراقي', language: 'العربية' },
+    { country: 'سوريا', capital: 'دمشق', flag: '🇸🇾', continent: 'الشرق الأوسط', population: '17 مليون', currency: 'ليرة سورية', language: 'العربية' },
+    { country: 'قطر', capital: 'الدوحة', flag: '🇶🇦', continent: 'الشرق الأوسط', population: '3 مليون', currency: 'ريال قطري', language: 'العربية' },
+    { country: 'الكويت', capital: 'الكويت', flag: '🇰🇼', continent: 'الشرق الأوسط', population: '4 مليون', currency: 'دينار كويتي', language: 'العربية' },
+    { country: 'عُمان', capital: 'مسقط', flag: '🇴🇲', continent: 'الشرق الأوسط', population: '5 مليون', currency: 'ريال عماني', language: 'العربية' },
+    { country: 'البحرين', capital: 'المنامة', flag: '🇧🇭', continent: 'الشرق الأوسط', population: '2 مليون', currency: 'دينار بحريني', language: 'العربية' },
+    { country: 'اليمن', capital: 'صنعاء', flag: '🇾🇪', continent: 'الشرق الأوسط', population: '33 مليون', currency: 'ريال يمني', language: 'العربية' },
+    { country: 'تركيا', capital: 'أنقرة', flag: '🇹🇷', continent: 'الشرق الأوسط', population: '85 مليون', currency: 'ليرة تركية', language: 'التركية' },
+    { country: 'إيران', capital: 'طهران', flag: '🇮🇷', continent: 'الشرق الأوسط', population: '88 مليون', currency: 'ريال إيراني', language: 'الفارسية' },
+
+    // آسيا
+    { country: 'الصين', capital: 'بكين', flag: '🇨🇳', continent: 'آسيا', population: '1.4 مليار', currency: 'يوان', language: 'الصينية' },
+    { country: 'اليابان', capital: 'طوكيو', flag: '🇯🇵', continent: 'آسيا', population: '125 مليون', currency: 'ين ياباني', language: 'اليابانية' },
+    { country: 'الهند', capital: 'نيودلهي', flag: '🇮🇳', continent: 'آسيا', population: '1.4 مليار', currency: 'روبية هندية', language: 'الهندية' },
+    { country: 'كوريا الجنوبية', capital: 'سول', flag: '🇰🇷', continent: 'آسيا', population: '52 مليون', currency: 'وون', language: 'الكورية' },
+    { country: 'تايلاند', capital: 'بانكوك', flag: '🇹🇭', continent: 'آسيا', population: '70 مليون', currency: 'بات', language: 'التايلاندية' },
+    { country: 'إندونيسيا', capital: 'جاكرتا', flag: '🇮🇩', continent: 'آسيا', population: '275 مليون', currency: 'روبية', language: 'الإندونيسية' },
+    { country: 'ماليزيا', capital: 'كوالالمبور', flag: '🇲🇾', continent: 'آسيا', population: '33 مليون', currency: 'رينغيت', language: 'الملايوية' },
+    { country: 'باكستان', capital: 'إسلام آباد', flag: '🇵🇰', continent: 'آسيا', population: '230 مليون', currency: 'روبية باكستانية', language: 'الأردية' },
+    { country: 'أفغانستان', capital: 'كابول', flag: '🇦🇫', continent: 'آسيا', population: '40 مليون', currency: 'أفغاني', language: 'الباشتو' },
+    { country: 'الفلبين', capital: 'مانيلا', flag: '🇵🇭', continent: 'آسيا', population: '110 مليون', currency: 'بيسو', language: 'الفلبينية' },
+    { country: 'سنغافورة', capital: 'سنغافورة', flag: '🇸🇬', continent: 'آسيا', population: '6 مليون', currency: 'دولار سنغافوري', language: 'الإنجليزية' },
+
+    // أوروبا
+    { country: 'فرنسا', capital: 'باريس', flag: '🇫🇷', continent: 'أوروبا', population: '68 مليون', currency: 'يورو', language: 'الفرنسية' },
+    { country: 'ألمانيا', capital: 'برلين', flag: '🇩🇪', continent: 'أوروبا', population: '84 مليون', currency: 'يورو', language: 'الألمانية' },
+    { country: 'إيطاليا', capital: 'روما', flag: '🇮🇹', continent: 'أوروبا', population: '60 مليون', currency: 'يورو', language: 'الإيطالية' },
+    { country: 'إسبانيا', capital: 'مدريد', flag: '🇪🇸', continent: 'أوروبا', population: '47 مليون', currency: 'يورو', language: 'الإسبانية' },
+    { country: 'المملكة المتحدة', capital: 'لندن', flag: '🇬🇧', continent: 'أوروبا', population: '67 مليون', currency: 'جنيه إسترليني', language: 'الإنجليزية' },
+    { country: 'روسيا', capital: 'موسكو', flag: '🇷🇺', continent: 'أوروبا', population: '144 مليون', currency: 'روبل', language: 'الروسية' },
+    { country: 'هولندا', capital: 'أمستردام', flag: '🇳🇱', continent: 'أوروبا', population: '17 مليون', currency: 'يورو', language: 'الهولندية' },
+    { country: 'السويد', capital: 'ستوكهولم', flag: '🇸🇪', continent: 'أوروبا', population: '10 مليون', currency: 'كرونة سويدية', language: 'السويدية' },
+    { country: 'النرويج', capital: 'أوسلو', flag: '🇳🇴', continent: 'أوروبا', population: '5 مليون', currency: 'كرونة نرويجية', language: 'النرويجية' },
+    { country: 'اليونان', capital: 'أثينا', flag: '🇬🇷', continent: 'أوروبا', population: '11 مليون', currency: 'يورو', language: 'اليونانية' },
+    { country: 'البرتغال', capital: 'لشبونة', flag: '🇵🇹', continent: 'أوروبا', population: '10 مليون', currency: 'يورو', language: 'البرتغالية' },
+    { country: 'سويسرا', capital: 'برن', flag: '🇨🇭', continent: 'أوروبا', population: '9 مليون', currency: 'فرنك سويسري', language: 'الألمانية' },
+
+    // أفريقيا
+    { country: 'نيجيريا', capital: 'أبوجا', flag: '🇳🇬', continent: 'أفريقيا', population: '220 مليون', currency: 'نايرا', language: 'الإنجليزية' },
+    { country: 'كينيا', capital: 'نيروبي', flag: '🇰🇪', continent: 'أفريقيا', population: '55 مليون', currency: 'شلن كيني', language: 'السواحيلية' },
+    { country: 'إثيوبيا', capital: 'أديس أبابا', flag: '🇪🇹', continent: 'أفريقيا', population: '120 مليون', currency: 'بير', language: 'الأمهرية' },
+    { country: 'المغرب', capital: 'الرباط', flag: '🇲🇦', continent: 'أفريقيا', population: '37 مليون', currency: 'درهم مغربي', language: 'العربية' },
+    { country: 'الجزائر', capital: 'الجزائر', flag: '🇩🇿', continent: 'أفريقيا', population: '45 مليون', currency: 'دينار جزائري', language: 'العربية' },
+    { country: 'تونس', capital: 'تونس', flag: '🇹🇳', continent: 'أفريقيا', population: '12 مليون', currency: 'دينار تونسي', language: 'العربية' },
+    { country: 'ليبيا', capital: 'طرابلس', flag: '🇱🇾', continent: 'أفريقيا', population: '7 مليون', currency: 'دينار ليبي', language: 'العربية' },
+    { country: 'السودان', capital: 'الخرطوم', flag: '🇸🇩', continent: 'أفريقيا', population: '45 مليون', currency: 'جنيه سوداني', language: 'العربية' },
+    { country: 'جنوب أفريقيا', capital: 'بريتوريا', flag: '🇿🇦', continent: 'أفريقيا', population: '60 مليون', currency: 'راند', language: 'الإنجليزية' },
+    { country: 'غانا', capital: 'أكرا', flag: '🇬🇭', continent: 'أفريقيا', population: '32 مليون', currency: 'سيدي', language: 'الإنجليزية' },
+
+    // أمريكا الشمالية
+    { country: 'الولايات المتحدة', capital: 'واشنطن', flag: '🇺🇸', continent: 'أمريكا الشمالية', population: '335 مليون', currency: 'دولار أمريكي', language: 'الإنجليزية' },
+    { country: 'كندا', capital: 'أوتاوا', flag: '🇨🇦', continent: 'أمريكا الشمالية', population: '39 مليون', currency: 'دولار كندي', language: 'الإنجليزية' },
+    { country: 'المكسيك', capital: 'مكسيكو سيتي', flag: '🇲🇽', continent: 'أمريكا الشمالية', population: '130 مليون', currency: 'بيسو مكسيكي', language: 'الإسبانية' },
+    { country: 'كوبا', capital: 'هافانا', flag: '🇨🇺', continent: 'أمريكا الشمالية', population: '11 مليون', currency: 'بيسو كوبي', language: 'الإسبانية' },
+
+    // أمريكا الجنوبية
+    { country: 'البرازيل', capital: 'برازيليا', flag: '🇧🇷', continent: 'أمريكا الجنوبية', population: '215 مليون', currency: 'ريال برازيلي', language: 'البرتغالية' },
+    { country: 'الأرجنتين', capital: 'بوينس آيرس', flag: '🇦🇷', continent: 'أمريكا الجنوبية', population: '46 مليون', currency: 'بيسو أرجنتيني', language: 'الإسبانية' },
+    { country: 'تشيلي', capital: 'سانتياغو', flag: '🇨🇱', continent: 'أمريكا الجنوبية', population: '19 مليون', currency: 'بيسو تشيلي', language: 'الإسبانية' },
+    { country: 'بيرو', capital: 'ليما', flag: '🇵🇪', continent: 'أمريكا الجنوبية', population: '34 مليون', currency: 'سول', language: 'الإسبانية' },
+    { country: 'كولومبيا', capital: 'بوغوتا', flag: '🇨🇴', continent: 'أمريكا الجنوبية', population: '52 مليون', currency: 'بيسو كولومبي', language: 'الإسبانية' },
+
+    // أوقيانوسيا
+    { country: 'أستراليا', capital: 'كانبرا', flag: '🇦🇺', continent: 'أوقيانوسيا', population: '26 مليون', currency: 'دولار أسترالي', language: 'الإنجليزية' },
+    { country: 'نيوزيلندا', capital: 'ويلينغتون', flag: '🇳🇿', continent: 'أوقيانوسيا', population: '5 مليون', currency: 'دولار نيوزيلندي', language: 'الإنجليزية' },
+    { country: 'فيجي', capital: 'سوفا', flag: '🇫🇯', continent: 'أوقيانوسيا', population: '900 ألف', currency: 'دولار فيجي', language: 'الإنجليزية' }
+  ];
+
+  const grid = document.getElementById('grid');
+  const searchInput = document.getElementById('searchInput');
+  const continentFilter = document.getElementById('continentFilter');
+  const noResults = document.getElementById('noResults');
+  const stats = document.getElementById('stats');
+  const modalOverlay = document.getElementById('modalOverlay');
+
+  /* ============================
+     🎨 عرض البطاقات
+     ============================ */
+  function renderCards(data) {
+    grid.innerHTML = '';
+
+    if (data.length === 0) {
+      noResults.classList.add('show');
+      stats.innerHTML = '';
+      return;
+    }
+
+    noResults.classList.remove('show');
+
+    data.forEach(item => {
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <span class="continent-badge">${item.continent}</span>
+        <span class="flag">${item.flag}</span>
+        <div class="country">${item.country}</div>
+        <div class="capital">🏛️ ${item.capital}</div>
+        <div class="info">👥 ${item.population} | 💰 ${item.currency}</div>
+      `;
+      card.addEventListener('click', () => openModal(item));
+      grid.appendChild(card);
+    });
+
+    stats.innerHTML = `📊 عدد النتائج: <strong>${data.length}</strong> دولة`;
+  }
+
+  /* ============================
+     🔍 البحث والتصفية
+     ============================ */
+  function filterData() {
+    const query = searchInput.value.trim().toLowerCase();
+    const continent = continentFilter.value;
+
+    const filtered = capitalsData.filter(item => {
+      const matchesSearch =
+        item.country.toLowerCase().includes(query) ||
+        item.capital.toLowerCase().includes(query);
+      const matchesContinent =
+        continent === 'all' || item.continent === continent;
+      return matchesSearch && matchesContinent;
+    });
+
+    renderCards(filtered);
+  }
+
+  searchInput.addEventListener('input', filterData);
+  continentFilter.addEventListener('change', filterData);
+
+  /* ============================
+     🪟 النافذة المنبثقة
+     ============================ */
+  function openModal(item) {
+    document.getElementById('modalFlag').textContent = item.flag;
+    document.getElementById('modalCountry').textContent = item.country;
+    document.getElementById('modalCapital').textContent = '🏛️ العاصمة: ' + item.capital;
+
+    document.getElementById('modalInfo').innerHTML = `
+      <div class="info-row">
+        <span>🌍 القارة</span>
+        <span>${item.continent}</span>
+      </div>
+      <div class="info-row">
+        <span>👥 عدد السكان</span>
+        <span>${item.population}</span>
+      </div>
+      <div class="info-row">
+        <span>💰 العملة</span>
+        <span>${item.currency}</span>
+      </div>
+      <div class="info-row">
+        <span>🗣️ اللغة الرسمية</span>
+        <span>${item.language}</span>
+      </div>
+    `;
+
+    modalOverlay.classList.add('active');
+  }
+
+  function closeModal() {
+    modalOverlay.classList.remove('active');
+  }
+
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) closeModal();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  /* ============================
+     🚀 التشغيل الأولي
+     ============================ */
+  renderCards(capitalsData);
+</script>
+
+</body>
+</html>
